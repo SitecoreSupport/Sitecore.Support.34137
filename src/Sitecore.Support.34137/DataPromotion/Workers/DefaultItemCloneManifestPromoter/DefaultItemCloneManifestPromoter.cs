@@ -9,6 +9,7 @@ using Sitecore.Framework.Publishing.DataPromotion;
 using Sitecore.Framework.Publishing.Item;
 using Sitecore.Framework.Publishing.Locators;
 using Sitecore.Framework.Publishing.Manifest;
+using Sitecore.Framework.Publishing;
 
 namespace Sitecore.Support.Framework.Publishing.DataPromotion
 {
@@ -62,9 +63,9 @@ namespace Sitecore.Support.Framework.Publishing.DataPromotion
 
               await Task.WhenAll(
                 itemWorker.SaveVariants(declonedData.Select(d => d.Item1).ToArray()),
-                relationshipRepository.Save(targetContext.TargetStore.Name,
+                relationshipRepository.Save(targetContext.TargetStore.ScDatabaseName,
                   declonedData.ToDictionary(d => (IItemVariantIdentifier) d.Item1,
-                    d => (IReadOnlyCollection<IItemRelationship>) d.Item2)));
+                    d => (IReadOnlyCollection<IItemRelationship>) d.Item2))); // Sitecore.Support.34137
             },
             _options.BatchSize,
             cancelTokenSource);
@@ -84,7 +85,7 @@ namespace Sitecore.Support.Framework.Publishing.DataPromotion
       // get the clones..
       var cloneVariantsTask = itemRepository.GetVariants(cloneLocators);
       var cloneRelationshipsTask =
-        relationshipRepository.GetOutRelationships(targetContext.TargetStore.Name, cloneLocators);
+        relationshipRepository.GetOutRelationships(targetContext.SourceStore.Name, cloneLocators); // Sitecore.Support.34137
       await Task.WhenAll(cloneVariantsTask, cloneRelationshipsTask).ConfigureAwait(false);
 
       var cloneVariants = cloneVariantsTask.Result
@@ -112,7 +113,7 @@ namespace Sitecore.Support.Framework.Publishing.DataPromotion
 
       var cloneSourceVariantsTask = itemRepository.GetVariants(cloneSourceLocators);
       var cloneSourceRelationshipsTask =
-        relationshipRepository.GetOutRelationships(targetContext.TargetStore.Name, cloneSourceLocators);
+        relationshipRepository.GetOutRelationships(targetContext.SourceStore.Name, cloneSourceLocators); // Sitecore.Support.34137
       await Task.WhenAll(cloneSourceVariantsTask, cloneSourceRelationshipsTask).ConfigureAwait(false);
 
       var cloneSourceVariants =
@@ -176,12 +177,18 @@ namespace Sitecore.Support.Framework.Publishing.DataPromotion
       // links data
       var linksFromClone = cloneRelationships
         .Where(cloneRel =>
-          // this is a special relationship that captures the link between an item and its template
-          // this needs to be processed once .. hence it's being taken from the source and skiped from the clone (both must have the same template id)
-            cloneRel.Type != ItemRelationshipType.TemplatedBy &&
+          // Sitecore.Support.34137 +++
+          // the 'Source' and '_Source Item' fields should be skipped
+            cloneRel.Type != ItemRelationshipType.CloneOf &&
+            cloneRel.Type != ItemRelationshipType.CloneVersionOf &&
+            // Sitecore.Support.34137 ---
+
+            // this is a special relationship that captures the link between an item and its template
+            // this needs to be processed once .. hence it's being taken from the source and skiped from the clone (both must have the same template id)
+            (cloneRel.Type != ItemRelationshipType.TemplatedBy &&
             !cloneVariant.Fields.Any() ||
             cloneRel.SourceFieldId == null ||
-            cloneVariant.Fields.Any(c => c.FieldId == cloneRel.SourceFieldId))
+            cloneVariant.Fields.Any(c => c.FieldId == cloneRel.SourceFieldId)))
         .ToArray();
 
       var linksFromSource = sourceRelationships
