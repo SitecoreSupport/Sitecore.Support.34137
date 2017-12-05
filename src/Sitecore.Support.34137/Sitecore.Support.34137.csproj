@@ -79,6 +79,7 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="App_Config\Include\zzz\Sitecore.Support.34137.config" />
+    <Content Include="config\global\sc.Sitecore.Support.34137.xml" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
