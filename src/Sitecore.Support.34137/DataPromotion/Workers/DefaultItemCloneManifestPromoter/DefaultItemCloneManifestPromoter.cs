@@ -1,12 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Sitecore.Framework.Publishing.DataPromotion;
 using Sitecore.Framework.Publishing.Item;
 using Sitecore.Framework.Publishing.Locators;
+using Sitecore.Framework.Publishing.Manifest;
 
 namespace Sitecore.Support.Framework.Publishing.DataPromotion
 {
@@ -16,16 +18,58 @@ namespace Sitecore.Support.Framework.Publishing.DataPromotion
     private static readonly IItemVariantIdentifierComparer VariantIdentifierComparer =
       new IItemVariantIdentifierComparer();
 
+    private readonly PromoterOptions _options;
+
     public DefaultItemCloneManifestPromoter(
       ILogger<DefaultItemCloneManifestPromoter> logger,
       PromoterOptions options = null) : base(logger, options)
     {
+      _options = options ?? new PromoterOptions();
     }
 
     public DefaultItemCloneManifestPromoter(
       ILogger<DefaultItemCloneManifestPromoter> logger,
       IConfiguration config) : base(logger, config)
     {
+    }
+
+    public override async Task Promote(
+      TargetPromoteContext targetContext,
+      IManifestRepository manifestRepository,
+      IItemReadRepository sourceItemRepository,
+      IItemRelationshipRepository relationshipRepository,
+      IItemWriteRepository targetItemRepository,
+      FieldReportSpecification fieldsToReport,
+      CancellationTokenSource cancelTokenSource)
+    {
+      await base.Promote(async () =>
+        {
+          var itemWorker = CreatePromoteWorker(manifestRepository, targetItemRepository,
+            targetContext.Manifest.ManifestId, targetContext.CalculateResults, fieldsToReport);
+
+          await ProcessManifestInBatches(
+            manifestRepository,
+            targetContext.Manifest.ManifestId,
+            ManifestStepAction.PromoteCloneVariant,
+            async (ItemVariantLocator[] batchUris) =>
+            {
+              return await DecloneVariants(targetContext, sourceItemRepository, relationshipRepository, batchUris)
+                .ConfigureAwait(false);
+            },
+            async declonedData =>
+            {
+              if (!declonedData.Any()) return;
+
+              await Task.WhenAll(
+                itemWorker.SaveVariants(declonedData.Select(d => d.Item1).ToArray()),
+                relationshipRepository.Save(targetContext.TargetStore.Name,
+                  declonedData.ToDictionary(d => (IItemVariantIdentifier) d.Item1,
+                    d => (IReadOnlyCollection<IItemRelationship>) d.Item2)));
+            },
+            _options.BatchSize,
+            cancelTokenSource);
+        },
+        cancelTokenSource);
     }
 
     /// <summary>
