@@ -81,9 +81,9 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
-    <Content Include="config\global\sc.Sitecore.Support.34137.xml">
+    <AdditionalFiles Include="config\global\sc.Sitecore.Support.34137.xml">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
+    </AdditionalFiles>
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
