@@ -42,31 +42,31 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="Microsoft.Extensions.Configuration.Abstractions">
+    <Reference Include="">
       <HintPath>..\..\lib\Microsoft.Extensions.Configuration.Abstractions.dll</HintPath>
       <Private>False</Private>
     </Reference>
-    <Reference Include="Microsoft.Extensions.Logging.Abstractions">
+    <Reference Include="">
       <HintPath>..\..\lib\Microsoft.Extensions.Logging.Abstractions.dll</HintPath>
       <Private>False</Private>
     </Reference>
-    <Reference Include="Sitecore.Framework.Configuration.Extensions">
+    <Reference Include="">
       <HintPath>..\..\lib\Sitecore.Framework.Configuration.Extensions.dll</HintPath>
       <Private>False</Private>
     </Reference>
-    <Reference Include="Sitecore.Framework.Publishing">
+    <Reference Include="">
       <HintPath>..\..\lib\Sitecore.Framework.Publishing.dll</HintPath>
       <Private>False</Private>
     </Reference>
-    <Reference Include="Sitecore.Framework.Publishing.Abstractions">
+    <Reference Include="">
       <HintPath>..\..\lib\Sitecore.Framework.Publishing.Abstractions.dll</HintPath>
       <Private>False</Private>
     </Reference>
-    <Reference Include="Sitecore.Framework.Publishing.Common">
+    <Reference Include="">
       <HintPath>..\..\lib\Sitecore.Framework.Publishing.Common.dll</HintPath>
       <Private>False</Private>
     </Reference>
-    <Reference Include="Sitecore.Framework.Publishing.Service.Abstractions">
+    <Reference Include="">
       <HintPath>..\..\lib\Sitecore.Framework.Publishing.Service.Abstractions.dll</HintPath>
       <Private>False</Private>
     </Reference>
